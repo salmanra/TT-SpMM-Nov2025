@@ -183,6 +183,9 @@ void kernel_main(){
                 // Barrier! make sure the reads are done
                 noc_async_read_barrier();
 
+                DPRINT_DATA0(DPRINT << "Read src0 block" << ENDL());
+
+
                 // wait until all in0 mcast destinations have atomically incremented the in0 semaphore_addr (i.e. its value
                 // should be in0_mcast_num_dests), then reset the semaphore_addr value back to zero for the next block
                 noc_semaphore_wait(in0_mcast_sender_semaphore_addr_ptr, in0_mcast_num_dests);
@@ -201,7 +204,7 @@ void kernel_main(){
 
                 cb_push_back(cb_id_in0, in0_block_num_tiles);
 
-                // DPRINT_DATA0(DPRINT << "Mcasted block " << ENDL());
+                DPRINT_DATA0(DPRINT << "Mcasted block " << ENDL());
 
                 // Read in1 block                
                 cb_reserve_back(cb_id_in1, in1_block_num_tiles);
@@ -223,7 +226,7 @@ void kernel_main(){
                 noc_async_read_barrier();
 
                 cb_push_back(cb_id_in1, in1_block_num_tiles);
-                // DPRINT_DATA0(DPRINT << "Read src1 block" << ENDL());
+                DPRINT_DATA0(DPRINT << "Read src1 block" << ENDL());
             }
         }
     }

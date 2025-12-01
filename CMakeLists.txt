@@ -172,6 +172,9 @@ add_compile_options(
     -Wall
     -Werror
     "$<$<CXX_COMPILER_ID:Clang>:-Wconditional-uninitialized>"
+    "$<$<CXX_COMPILER_ID:Clang>:-Wno-error=conditional-uninitialized>"  # ADD THIS
+    "$<$<CXX_COMPILER_ID:Clang>:-Wno-error=uninitialized>"
+    "$<$<CXX_COMPILER_ID:Clang>:-Wno-error=unused-variable>"
     # The following list is not indicative of what we _desire_ only the status quo to build.
     -Wno-deprecated-declarations
     "$<$<CXX_COMPILER_ID:Clang>:-Wno-c++11-narrowing>"

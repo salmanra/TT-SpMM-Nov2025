@@ -8,6 +8,7 @@
 #include <system_error>
 #include <tracy/Tracy.hpp>
 #include "hostdevcommon/profiler_common.h"
+#include <tt-metalium/tt_metal_profiler.hpp>
 
 #include <cstdlib> // required to start ./capture-release listening
 
@@ -23,7 +24,6 @@ void profile_test(
     HostCodeFunctionPtr host_func,
     bsr_matrix<bfloat16>& a,
     dense_matrix<bfloat16>& b,
-    std::string& test_name,
     int num_iters = 10);
 
 int main(int argc, char** argv) {
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     int registry_number = argc > 3 ? std::stoi(argv[3]) : 0;
     int num_iters = argc > 4 ? std::stoi(argv[3]) : 10;
 
-    ProfileCaseFunctionPtr *Registry;
+    ProfileCaseFunctionPtr *Registry = nullptr;
     std::string registry_name;
     switch (registry_number) {
         case 0:
@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
     std::system(capture_trace_command.c_str());
 
     // // // run the program
-    profile_test(host_function, a, b, test_name, num_iters);
+    profile_test(host_function, a, b, num_iters);
 
     // print footer
     std::cout << "---------------------------------------------------------------------------------" << std::endl;
@@ -119,7 +119,6 @@ void profile_test(
         HostCodeFunctionPtr host_func,
         bsr_matrix<bfloat16>& a,
         dense_matrix<bfloat16>& b,
-        std::string& test_name,
         int num_iters) {
     // device setup
     constexpr int device_id = 0;
@@ -134,7 +133,6 @@ void profile_test(
         uint32_t R = a.R;
         uint32_t C = a.C;
         uint32_t nblocks = a.nblocks;
-        uint32_t block_matrix_height = M / R;
 
         // initialize output_data
         dense_matrix<float> tmp(M, N, 0.0f);
@@ -148,17 +146,18 @@ void profile_test(
         tilize_nfaces(b.data, K, N);
 
         // warm up
-        host_func(a, b, output, false, nblocks, M, N, K, R, C, mesh_device, false);
+        host_func(a, b, output, nblocks, M, N, K, R, C, mesh_device, false);
         {
             ZoneScopedNC("Program Loop", tracy::Color::Aquamarine);
             for (int count = 0; count < num_iters; count++){
-                host_func(a, b, output, false, nblocks, M, N, K, R, C, mesh_device, false);
+                host_func(a, b, output, nblocks, M, N, K, R, C, mesh_device, false);
             }
         }
 
         untilize_nfaces(output.data, M, N);
     }
 
-    tt_metal::detail::DumpDeviceProfileResults(device);
-    CloseDevice(device);
+    // tt_metal::detail::DumpDeviceProfileResults(device);
+    ReadMeshDeviceProfilerResults(*mesh_device);
+    mesh_device->close();
 }

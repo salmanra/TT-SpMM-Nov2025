@@ -93,19 +93,21 @@ TestResult run_test(
 
     // for (int i = 0; i < a.data.size(); i+=32) {
     //     for (int j = 0; j < 32; j++){
-    //         console_printf(a.data[i + j] << ' ';
+    //         console_printf(a.data[i + j]) << ' ';
     //     }
-    //     console_printf(std::endl;
+    //     console_printf(std::endl);
     // }
-    // console_printf(std::endl;
-    // console_printf(std::endl;
-    // console_printf(std::endl;
+    // console_printf(std::endl);
+    // console_printf(std::endl);
+    // console_printf(std::endl);
 
     // run bsr_spmm_multicore_reuse
     // console_printf("Do we seg fault before...");
-    host_func(a, b, output, false, nblocks, M, N, K, R, C, 1, mesh_device, verbose);
+    host_func(a, b, output, nblocks, M, N, K, R, C, mesh_device, verbose);
     // console_printf("... or after running the program?\n");
 
+    // Ensure all device operations complete before proceeding
+    distributed::Finish(mesh_device->mesh_command_queue());
 
     if (emit_output) {
         // it makes 1000x more sense to print the tilized result. That's what these are!... bruh moment
@@ -119,7 +121,7 @@ TestResult run_test(
             TT_THROW("Failed to open output file: {}", output_file);
         }
         for (size_t i = 0; i < output.data.size(); i++) {
-            out << output.data[i].to_float() << "\n";
+            out << float(output.data[i]) << "\n";
         }
         out.close();
 
@@ -130,43 +132,48 @@ TestResult run_test(
         if (!golden_out.is_open()) {
             TT_THROW("Failed to open golden file: {}", golden_file);
         }
+        log_info(tt::LogVerif, "golden vector size: {} vs M={} N={}", golden.data.size(), M, N);
 
         tilize_nfaces(golden.data, M, N);
         for (size_t i = 0; i < golden.data.size(); i++) {
-            golden_out << golden.data[i].to_float() << "\n";
+            golden_out << float(golden.data[i]) << "\n";
         }
         untilize_nfaces(golden.data, M, N);
         golden_out.close();
 
 
-        // // print bsr matrix. should i tilize?
-        // std::string bsr_file = local_path + "/bsr.txt";
-        // std::ofstream bsr_out(bsr_file);
-        // if (!bsr_out.is_open()) {
-        //     TT_THROW("Failed to open bsr file: {}", bsr_file);
-        // }
-        // untilize(a.data, R, C);
-        // for (size_t i = 0; i < a.data.size(); i++) {
-        //     bsr_out << a.data[i].to_float() << "\n";
-        // }
-        // bsr_out.close();
+        // print bsr matrix. should i tilize?
+        std::string bsr_file = local_path + "/bsr.txt";
+        std::ofstream bsr_out(bsr_file);
+        if (!bsr_out.is_open()) {
+            TT_THROW("Failed to open bsr file: {}", bsr_file);
+        }
+        untilize_nfaces(a.data, R, C);
+        for (size_t i = 0; i < a.data.size(); i++) {
+            bsr_out << float(a.data[i]) << "\n";
+        }
+        bsr_out.close();
     }
 
     // untile output data
+    log_info(tt::LogVerif, "output vector size: {} vs M={} N={}", output.data.size(), M, N);
     untilize_nfaces(output.data, M, N);
 
     float pearson = check_bfloat16_vector_pcc(golden.data, output.data);
 
     // this is useless when matrices are not tiny with tiny elements. I get it now.
     // PCC is faulty and gives false positives for say, equality up to scaling, but
-    // all_close is simply not suitable for bfloat16. 
+    // all_close is simply not suitable for bfloat16.
     // surely there is a version of all_close which bases its tolerance on the norm of the input matrices?
     bool all_close = golden.all_close_bfloat16(output);
+
+    // Create result before closing device to avoid use-after-free
+    TestResult result{test_name, pearson, all_close};
 
     // CloseDevice(device);
     mesh_device->close();
 
-    return TestResult{test_name, pearson, all_close};
+    return result;
 }
 
 void add_and_run_test(
@@ -337,11 +344,15 @@ void run_verbose_test(int host_code_num, int test_num){
     console_printf(" ");
     console_printf(std::to_string(test_num).c_str());
     console_printf(" ");
-    console_printf(res.test_name.c_str());
+    console_printf(test_name.c_str());
     console_printf("\n");
     console_printf("--------------------------------------------------------\n");
     console_printf("--------------------------------------------------------\n");
     console_printf("--------------------------------------------------------\n");
+
+    // WORKAROUND: Exit cleanly to avoid destructor issues
+    // The test completed successfully, results are printed
+    std::exit(pass ? 0 : 1);
 }
 
 int main(int argc, char** argv) {

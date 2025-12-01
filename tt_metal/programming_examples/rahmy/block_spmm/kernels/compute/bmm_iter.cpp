@@ -49,7 +49,8 @@ void MAIN {
     ///////////////////////////////////////////////////////////////////////
     /// PROGRAM BODY //////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////
-    mm_init();
+    mm_init(tt::CBIndex::c_0, tt::CBIndex::c_1, tt::CBIndex::c_16);
+
 
     for (uint32_t iter_y = 0; iter_y < num_iters_y; iter_y++){
         uint32_t num_blocks = row_sizes[iter_y];
@@ -65,17 +66,17 @@ void MAIN {
                 cb_wait_front(tt::CBIndex::c_0, in0_block_num_tiles);
                 cb_wait_front(tt::CBIndex::c_1, in1_block_num_tiles);
 
-                // DPRINT_MATH(DPRINT << "in0 block num tiles:  " << in0_block_num_tiles << ENDL());
-                // DPRINT_MATH(DPRINT << "in1 block num tiles:  " <<  in1_block_num_tiles << ENDL());
+                DPRINT_MATH(DPRINT << "in0 block num tiles:  " << in0_block_num_tiles << ENDL());
+                DPRINT_MATH(DPRINT << "in1 block num tiles:  " <<  in1_block_num_tiles << ENDL());
 
 
                 int in0_index_subblock_offset = 0;
                 for (uint32_t in0_subblock = 0; in0_subblock < in0_num_subblocks; in0_subblock++) {
                     int in1_index_subblock_offset = 0;
                     for (uint32_t in1_subblock = 0; in1_subblock < in1_num_subblocks; in1_subblock++) {
-                        // acquire_dst();
-                        ckernel::tile_regs_acquire();
-                        // DPRINT_MATH(DPRINT << "acquired" << ENDL());
+                        acquire_dst();
+                        // ckernel::tile_regs_acquire();
+                        DPRINT_MATH(DPRINT << "acquired" << ENDL());
 
                         if (enable_reload) {
                             copy_tile_to_dst_init_short(tt::CBIndex::c_24);
@@ -84,7 +85,7 @@ void MAIN {
                                 copy_tile(tt::CBIndex::c_24, i, i);
                             }
                             cb_pop_front(tt::CBIndex::c_24, out_subblock_num_tiles);
-                            mm_init_short();
+                            mm_init_short(tt::CBIndex::c_0, tt::CBIndex::c_1);
                         }
 
                         // Compute output sub-block from in0_subblock x in1_subblock
@@ -114,9 +115,9 @@ void MAIN {
                             in0_index_h_offset += in0_block_w;
                         }
                         // DPRINT_MATH(DPRINT << "mulled" << ENDL());
-                        ckernel::tile_regs_commit();
+                        // ckernel::tile_regs_commit();
 
-                        ckernel::tile_regs_wait();
+                        // ckernel::tile_regs_wait();
                         if (last_out) {
                             // Pack out to output buffer
                             cb_reserve_back(tt::CBIndex::c_16, out_subblock_num_tiles);
@@ -143,9 +144,9 @@ void MAIN {
                             // DPRINT_MATH(DPRINT << "pushed to 24 " << ENDL());
 
                         }
-                        ckernel::tile_regs_release();
-                        // release_dst();
-                        // DPRINT_MATH(DPRINT << "released" << ENDL());
+                        // ckernel::tile_regs_release();
+                        release_dst();
+                        DPRINT_MATH(DPRINT << "released" << ENDL());
 
                         in1_index_subblock_offset += out_subblock_w;
                     }
@@ -159,7 +160,7 @@ void MAIN {
                 cb_pop_front(tt::CBIndex::c_0, in0_block_num_tiles);
                 cb_pop_front(tt::CBIndex::c_1, in1_block_num_tiles);
 
-                // DPRINT_MATH(DPRINT << "out " << ENDL());
+                DPRINT_MATH(DPRINT << "out " << ENDL());
 
             }
         }

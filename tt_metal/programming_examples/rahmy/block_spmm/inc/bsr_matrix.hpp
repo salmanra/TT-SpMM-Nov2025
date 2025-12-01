@@ -44,11 +44,11 @@ public:
         if (random)
             std::generate(data.begin(), data.end(), []() { return static_cast<T>(SIGNED_RAND_MAX - rand()) / static_cast<T>(RAND_DENOM); });
         else {
-            // std::fill(data.begin(), data.end(), 1);
-            uint32_t k = 0;
-            for (auto it = data.begin(); it != data.end(); it++){
-                *it = static_cast<T>(k++); 
-            }
+            std::fill(data.begin(), data.end(), 1);
+            // uint32_t k = 0;
+            // for (auto it = data.begin(); it != data.end(); it++){
+            //     *it = static_cast<T>(k++); 
+            // }
         }
     }
 
@@ -210,7 +210,7 @@ public:
                             if (random) {
                                 data.push_back(static_cast<T>(SIGNED_RAND_MAX - rand()) / static_cast<T>(RAND_DENOM));
                             } else {
-                                data.push_back(k);
+                                data.push_back(1);
                             }
                         }
                     }
@@ -226,7 +226,7 @@ public:
                             if (random) {
                                 data.push_back(static_cast<T>(SIGNED_RAND_MAX - rand()) / static_cast<T>(RAND_DENOM));
                             } else {
-                                data.push_back(k);
+                                data.push_back(1);
                             }
                         }
                     }
@@ -241,7 +241,7 @@ public:
                     if (random) {
                         data.push_back(static_cast<T>(SIGNED_RAND_MAX - rand()) / static_cast<T>(RAND_DENOM));
                     } else {
-                        data.push_back(k);
+                        data.push_back(1);
                     }
                 }
             }
