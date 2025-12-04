@@ -75,7 +75,7 @@ void kernel_main() {
                 uint32_t out_tensor_sbw_start_tile_id = out_tensor_sbh_start_tile_id;
                 for (uint32_t sbw = 0; sbw < out_num_subblocks_w; sbw++) {
                     uint32_t out_tensor_sb_row_start_tile_id = out_tensor_sbw_start_tile_id;
-                    DPRINT_DATA1(DPRINT << "waiting on a subblock" << ENDL());
+                    DPRINT_DATA1(DPRINT << "waiting on a subblock of " << out_subblock_tile_count << " tiles" << ENDL());
                     cb_wait_front(cb_id_out0, out_subblock_tile_count);
                     uint32_t l1_read_addr = get_read_ptr(cb_id_out0);
                     DPRINT_DATA1(DPRINT << "got a subblock" << ENDL());

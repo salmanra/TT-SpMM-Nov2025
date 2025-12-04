@@ -232,4 +232,7 @@ void kernel_main(){
     }
     cb_pop_front(cb_id_col_indices, indptr_num_tiles);
     cb_pop_front(cb_id_indptr, indptr_num_tiles);
+
+    DPRINT_DATA0(DPRINT << "RK done" << ENDL());
+
 }

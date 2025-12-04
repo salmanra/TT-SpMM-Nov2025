@@ -125,7 +125,7 @@ void MAIN {
                                 pack_tile(i, tt::CBIndex::c_16);
                             }
                             cb_push_back(tt::CBIndex::c_16, out_subblock_num_tiles);
-                            DPRINT_MATH(DPRINT << "pushed to 16 " << ENDL());
+                            DPRINT_MATH(DPRINT << "pushed " << out_subblock_num_tiles <<  " tiles to 16 " << ENDL());
 
                         } else {
                             // Wait for tiles in output buffer to be written out since interm and output share memory
@@ -165,5 +165,6 @@ void MAIN {
             }
         }
     }
+    DPRINT_MATH(DPRINT << "CK complete" << ENDL());
 };
 }

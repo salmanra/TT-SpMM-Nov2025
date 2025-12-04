@@ -78,19 +78,17 @@ void kernel_main(){
     uint32_t l1_write_addr_col_indices;
     uint32_t l1_write_addr_indptr;
 
-    const InterleavedAddrGenFast<in0_is_dram> s0 = {
-        .bank_base_address = in0_tensor_addr, .page_size = in0_single_tile_size_bytes, .data_format = in0_data_format};
-    const InterleavedAddrGenFast<in1_is_dram> s1 = {
-        .bank_base_address = in1_tensor_addr, .page_size = in1_single_tile_size_bytes, .data_format = in1_data_format};
-    const InterleavedAddrGenFast<col_indices_is_dram> s2 = {
-        .bank_base_address = col_indices_addr,
-        .page_size = col_indices_single_tile_size_bytes,
-        .data_format = col_indices_data_format};
-    const InterleavedAddrGenFast<indptr_is_dram> s3 = {
-        .bank_base_address = indptr_addr,
-        .page_size = indptr_single_tile_size_bytes,
-        .data_format = indptr_data_format};
 
+    constexpr auto s0_args = TensorAccessorArgs<0>();
+    const auto s0 = TensorAccessor(s0_args, in0_tensor_addr, in0_single_tile_size_bytes);
+    constexpr auto s1_args = TensorAccessorArgs<s0_args.next_compile_time_args_offset()>();
+    const auto s1 = TensorAccessor(s1_args, in1_tensor_addr, in1_single_tile_size_bytes);
+    constexpr auto s2_args = TensorAccessorArgs<s1_args.next_compile_time_args_offset()>();
+    const auto s2 = TensorAccessor(s2_args, col_indices_addr, col_indices_single_tile_size_bytes);
+    constexpr auto s3_args = TensorAccessorArgs<s2_args.next_compile_time_args_offset()>();
+    const auto s3 = TensorAccessor(s3_args, indptr_addr, indptr_single_tile_size_bytes);
+
+    
     cb_reserve_back(cb_id_col_indices, col_indices_num_tiles);
     l1_write_addr_col_indices = get_write_ptr(cb_id_col_indices);
     uint32_t col_indices_dram_start_id = 0;
